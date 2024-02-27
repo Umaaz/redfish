@@ -1,0 +1,49 @@
+@go.Package { name = "github.com/Umaaz/redfish/pkg/config" }
+abstract module pickle.config.job
+
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.5.3#/go.pkl"
+
+class RuleConfig {
+  rule: String
+  job: JobConfig
+}
+
+class JobConfig {
+  name: String?
+  tests: Listing<Test>
+}
+
+class Test {
+  id: String?
+  name: String?
+  url: String | DataSource
+  method: "get" | "post" | "put" | "delete" | String = "get"
+
+  headers: Mapping?
+  expected: Expectation = new {}
+}
+
+class Expectation {
+  status: Int(isBetween(100, 600)) = 200
+  headers: Mapping<String, Matcher>?
+  body: Matcher?
+}
+
+abstract class Matcher {
+  name: String
+}
+
+class JsonMatcher extends Matcher {
+  name = "json"
+  expected: Mapping
+}
+
+class StringMatcher extends Matcher {
+  name = "string"
+  expected: String
+}
+
+class DataSource {
+  sourceId: String
+  source: "response"
+}

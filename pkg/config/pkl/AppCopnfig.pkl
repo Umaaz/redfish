@@ -1,0 +1,12 @@
+@go.Package { name = "github.com/Umaaz/redfish/pkg/config" }
+module redfish.config.app
+
+extends "JobConfig.pkl"
+
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.5.3#/go.pkl"
+
+name: String
+
+jobs: Listing<JobConfig>
+
+rules: Listing<RuleConfig>

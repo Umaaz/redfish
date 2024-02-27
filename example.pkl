@@ -1,0 +1,27 @@
+amends "pkg/config/pkl/AppCopnfig.pkl"
+
+name = "FR Auth Proxy"
+
+local pingTest: JobConfig = new  {
+  name = "Can auth Deep"
+  tests = new {
+    new {
+      url = "https://api.staging.fusionreactor.io/frauthproxy/echo"
+      expected {
+        status = 200
+      }
+    }
+  }
+}
+
+
+jobs = new {
+  pingTest
+}
+
+rules = new {
+  new  {
+    rule = "*/0 0 0 1"
+    job = pingTest
+  }
+}
