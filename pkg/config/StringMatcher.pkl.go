@@ -10,9 +10,9 @@ type StringMatcher interface {
 var _ StringMatcher = (*StringMatcherImpl)(nil)
 
 type StringMatcherImpl struct {
-	Name string `pkl:"name"`
+	Name string `pkl:"name" json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
 
-	Expected string `pkl:"expected"`
+	Expected string `pkl:"expected" json:"expected,omitempty" toml:"expected,omitempty" yaml:"expected,omitempty"`
 }
 
 func (rcv *StringMatcherImpl) GetName() string {

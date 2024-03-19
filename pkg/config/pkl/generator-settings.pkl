@@ -1,0 +1,7 @@
+amends "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.5.3#/GeneratorSettings.pkl"
+
+structTags {
+  ["json"] = "%{name},omitempty"
+  ["yaml"] = "%{name},omitempty"
+  ["toml"] = "%{name},omitempty"
+}

@@ -2,7 +2,7 @@
 package config
 
 type JobConfig struct {
-	Name *string `pkl:"name"`
+	Name *string `pkl:"name" json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
 
-	Tests []*Test `pkl:"tests"`
+	Tests []*Test `pkl:"tests" json:"tests,omitempty" toml:"tests,omitempty" yaml:"tests,omitempty"`
 }

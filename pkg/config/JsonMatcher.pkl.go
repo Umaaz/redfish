@@ -10,9 +10,9 @@ type JsonMatcher interface {
 var _ JsonMatcher = (*JsonMatcherImpl)(nil)
 
 type JsonMatcherImpl struct {
-	Name string `pkl:"name"`
+	Name string `pkl:"name" json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
 
-	Expected map[any]any `pkl:"expected"`
+	Expected map[any]any `pkl:"expected" json:"expected,omitempty" toml:"expected,omitempty" yaml:"expected,omitempty"`
 }
 
 func (rcv *JsonMatcherImpl) GetName() string {

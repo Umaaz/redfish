@@ -2,7 +2,7 @@
 package config
 
 type DataSource struct {
-	SourceId string `pkl:"sourceId"`
+	SourceId string `pkl:"sourceId" json:"sourceId,omitempty" toml:"sourceId,omitempty" yaml:"sourceId,omitempty"`
 
-	Source string `pkl:"source"`
+	Source string `pkl:"source" json:"source,omitempty" toml:"source,omitempty" yaml:"source,omitempty"`
 }

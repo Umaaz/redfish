@@ -1,4 +1,11 @@
 @go.Package { name = "github.com/Umaaz/redfish/pkg/config" }
+@go.Field {
+  structTags {
+    ["toml"] = "%{name},omitempty"
+    ["json"] = "%{name},omitempty"
+    ["yaml"] = "%{name},omitempty"
+  }
+}
 abstract module pickle.config.job
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.5.3#/go.pkl"

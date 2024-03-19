@@ -20,11 +20,11 @@ type App interface {
 var _ App = (*AppImpl)(nil)
 
 type AppImpl struct {
-	Name string `pkl:"name"`
+	Name string `pkl:"name" json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
 
-	Jobs []*JobConfig `pkl:"jobs"`
+	Jobs []*JobConfig `pkl:"jobs" json:"jobs,omitempty" toml:"jobs,omitempty" yaml:"jobs,omitempty"`
 
-	Rules []*RuleConfig `pkl:"rules"`
+	Rules []*RuleConfig `pkl:"rules" json:"rules,omitempty" toml:"rules,omitempty" yaml:"rules,omitempty"`
 }
 
 func (rcv *AppImpl) GetName() string {
