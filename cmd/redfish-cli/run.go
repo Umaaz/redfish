@@ -1,8 +1,9 @@
 package main
 
 import (
-	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"github.com/Umaaz/redfish/pkg/format/junit"
 	"github.com/Umaaz/redfish/pkg/manager/local"
 )
 
@@ -16,7 +17,7 @@ func (r Run) Run(opts *globalOptions) error {
 
 	loadConfig, err := LoadConfig(r.File, r.pklOptions)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	service, err := local.NewService(nil, loadConfig)
@@ -29,8 +30,14 @@ func (r Run) Run(opts *globalOptions) error {
 		return err
 	}
 
-	indent, err := json.MarshalIndent(results, "", "  ")
-	fmt.Printf("%+v\n", string(indent))
+	convert, err := junit.Convert(results)
+	if err != nil {
+		return err
+	}
+
+	out, _ := xml.MarshalIndent(convert, " ", "  ")
+
+	fmt.Println(xml.Header + string(out))
 
 	return nil
 }

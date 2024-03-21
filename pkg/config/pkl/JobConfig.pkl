@@ -16,7 +16,7 @@ class RuleConfig {
 }
 
 class JobConfig {
-  name: String?
+  name: String
   tests: Listing<Test>
 }
 
@@ -25,6 +25,7 @@ class Test {
   name: String?
   url: String | DataSource
   method: "get" | "post" | "put" | "delete" | String = "get"
+  body: RequestBody?
 
   headers: Mapping?
   expected: Expectation = new {}
@@ -42,7 +43,7 @@ abstract class Matcher {
 
 class JsonMatcher extends Matcher {
   name = "json"
-  expected: Mapping
+  expected: Mapping<String, Any>
 }
 
 class StringMatcher extends Matcher {
@@ -50,7 +51,32 @@ class StringMatcher extends Matcher {
   expected: String
 }
 
+typealias Source = String | DataSource
+
 class DataSource {
   sourceId: String
   source: "response"
+  extractor: Extractor
+}
+
+abstract class RequestBody {
+  type: String
+}
+
+class FormBody extends RequestBody {
+  type = "form"
+  params: Mapping<Source, Source>
+}
+
+class JsonBody extends RequestBody {
+  type = "json"
+  params: Mapping<Source, Source>
+}
+
+abstract class Extractor {
+  default: String = ""
+}
+
+class JsonExtractor extends Extractor {
+  path: String
 }

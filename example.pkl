@@ -2,7 +2,7 @@ amends "pkg/config/pkl/AppCopnfig.pkl"
 
 name = "FR Auth Proxy"
 
-local pingTest: JobConfig = new  {
+local pingTest: JobConfig = new {
   name = "Can auth Deep"
   tests = new {
     new {
@@ -16,10 +16,60 @@ local pingTest: JobConfig = new  {
 
 jobs = new {
   pingTest
+  new {
+    name = "example.com"
+    tests = new {
+      new {
+        url = "https://example.com/ping"
+        expected {
+          status = 200
+        }
+      }
+    }
+  }
+  new {
+    name = "echo test"
+    tests = new {
+      new {
+        id = "initial"
+        name = "can post headers"
+        url = "https://postman-echo.com/headers"
+        headers = new {
+          ["x-redfish-test"] = "atestvalue"
+        }
+        expected {
+          body = new JsonMatcher {
+            expected {
+              ["headers.x-redfish-test"] = "atestvalue"
+            }
+          }
+        }
+      }
+      new {
+        name = "repost extracted response"
+        url = "https://postman-echo.com/post"
+        method = "post"
+        body = new FormBody {
+          params {
+            ["key1"] = new DataSource { sourceId = "initial" extractor = new JsonExtractor { path = "headers.x-redfish-test" } }
+          }
+        }
+        expected {
+          body = new JsonMatcher {
+            expected {
+              ["form.key1"] = "atestvalue"
+              ["json.key1"] = "atestvalue"
+              ["headers.content-type"] = "application/x-www-form-urlencoded"
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 rules = new {
-  new  {
+  new {
     rule = "*/0 0 0 1"
     job = pingTest
   }

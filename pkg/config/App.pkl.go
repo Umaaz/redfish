@@ -10,6 +10,8 @@ import (
 type App interface {
 	Job
 
+	GetFile() *string
+
 	GetName() string
 
 	GetJobs() []*JobConfig
@@ -20,11 +22,17 @@ type App interface {
 var _ App = (*AppImpl)(nil)
 
 type AppImpl struct {
+	File *string `pkl:"file" json:"file,omitempty" toml:"file,omitempty" yaml:"file,omitempty"`
+
 	Name string `pkl:"name" json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
 
 	Jobs []*JobConfig `pkl:"jobs" json:"jobs,omitempty" toml:"jobs,omitempty" yaml:"jobs,omitempty"`
 
 	Rules []*RuleConfig `pkl:"rules" json:"rules,omitempty" toml:"rules,omitempty" yaml:"rules,omitempty"`
+}
+
+func (rcv *AppImpl) GetFile() *string {
+	return rcv.File
 }
 
 func (rcv *AppImpl) GetName() string {

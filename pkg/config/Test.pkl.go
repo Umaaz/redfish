@@ -10,6 +10,8 @@ type Test struct {
 
 	Method string `pkl:"method" json:"method,omitempty" toml:"method,omitempty" yaml:"method,omitempty"`
 
+	Body *RequestBody `pkl:"body" json:"body,omitempty" toml:"body,omitempty" yaml:"body,omitempty"`
+
 	Headers *map[any]any `pkl:"headers" json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty"`
 
 	Expected *Expectation `pkl:"expected" json:"expected,omitempty" toml:"expected,omitempty" yaml:"expected,omitempty"`

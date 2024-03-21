@@ -18,5 +18,7 @@ func LoadConfig(file string, opts pklOptions) (config.App, error) {
 	if err != nil {
 		return nil, err
 	}
+	impl := ret.(*config.AppImpl)
+	impl.File = &file
 	return ret, nil
 }

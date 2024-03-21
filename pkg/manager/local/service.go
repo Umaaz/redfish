@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/Umaaz/redfish/pkg/config"
 	"github.com/Umaaz/redfish/pkg/manager"
+	"github.com/Umaaz/redfish/pkg/utils/logging"
 	"github.com/google/uuid"
 	"net/http"
+	"time"
 )
 
 type Config struct {
@@ -28,6 +30,7 @@ func NewService(config *Config, app config.App) (manager.Manager, error) {
 }
 
 func (s *Service) RunJob(config *config.JobConfig) (*manager.JobResult, error) {
+	logging.Logger.Info("Running Job", "app", s.app.GetName(), "job", config.Name)
 	result := &manager.JobResult{
 		Config: config,
 	}
@@ -37,12 +40,20 @@ func (s *Service) RunJob(config *config.JobConfig) (*manager.JobResult, error) {
 			u := uuid.New().String()
 			test.Id = &u
 		}
+		if test.Name == nil {
+			name := fmt.Sprintf("%s:%s", test.Method, test.Url)
+			test.Name = &name
+		}
+		logging.Logger.Info("Running test", "app", s.app.GetName(), "job", config.Name, "test", *test.Name, "id", *test.Id)
 
-		client := http.Client{}
+		client := http.Client{
+			Timeout: time.Second * 5,
+		}
 		request, err := http.NewRequest(test.Method, s.readValue(result, test.Url), nil)
 		if err != nil {
 			err = s.handleError(result, test, err)
 			if err != nil {
+				logging.Logger.Info("Error running test", "app", s.app.GetName(), "job", config.Name, "test", *test.Name, "id", *test.Id, "err", err)
 				return nil, err
 			}
 			return result, nil
@@ -52,6 +63,7 @@ func (s *Service) RunJob(config *config.JobConfig) (*manager.JobResult, error) {
 		if err != nil {
 			err = s.handleError(result, test, err)
 			if err != nil {
+				logging.Logger.Info("Error running test", "app", s.app.GetName(), "job", config.Name, "test", *test.Name, "id", *test.Id, "err", err)
 				return nil, err
 			}
 			return result, nil
@@ -61,6 +73,7 @@ func (s *Service) RunJob(config *config.JobConfig) (*manager.JobResult, error) {
 		if err != nil {
 			err = s.handleError(result, test, err)
 			if err != nil {
+				logging.Logger.Info("Error running test", "app", s.app.GetName(), "job", config.Name, "test", *test.Name, "id", *test.Id, "err", err)
 				return nil, err
 			}
 			return result, nil
@@ -71,22 +84,34 @@ func (s *Service) RunJob(config *config.JobConfig) (*manager.JobResult, error) {
 	return result, nil
 }
 
-func (s *Service) RunAllJobs() ([]*manager.JobResult, error) {
+func (s *Service) RunAllJobs() (manager.TestContext, error) {
+	start := time.Now()
 	jobs := s.app.GetJobs()
+	logging.Logger.Info("Running Jobs in app.", "app", s.app.GetName())
 	results := make([]*manager.JobResult, len(jobs))
 	for i, job := range jobs {
 		res, _ := s.RunJob(job)
 		results[i] = res
 	}
-	return results, nil
+
+	file := s.app.GetFile()
+	return manager.TestContext{
+		Name:      s.app.GetName(),
+		Timestamp: start,
+		Time:      time.Now().Sub(start).Seconds(),
+		File:      *file,
+		Results:   results,
+	}, nil
 }
 
 func (s *Service) handleError(result *manager.JobResult, test *config.Test, err error) error {
+	logging.Logger.Info("handling error from test", "app", s.app.GetName(), "job", result.Config.Name, "test", *test.Name, "id", *test.Id, "err", err)
 	tResult := &manager.TestResult{
 		Test: test,
 		Assertions: []*manager.Assertion{{
 			Pass:    false,
-			Name:    "Error Executing test",
+			Error:   true,
+			Type:    "ExecutingError",
 			Message: err.Error(),
 		}},
 	}
@@ -112,7 +137,7 @@ func (s *Service) checkResponse(res *http.Response, test *config.Test) (*manager
 
 	assertStatus := &manager.Assertion{
 		Pass:    true,
-		Name:    "StatusCode",
+		Type:    "StatusCode",
 		Message: fmt.Sprintf("%d == %d", test.Expected.Status, res.StatusCode),
 	}
 	if res.StatusCode != test.Expected.Status {
