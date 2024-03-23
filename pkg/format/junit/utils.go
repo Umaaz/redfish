@@ -193,8 +193,8 @@ func asString(value any) string {
 	if v, ok := value.(string); ok {
 		return v
 	}
-	if v, ok := value.(*map[any]any); ok {
-		return fmt.Sprintf("%+v", v)
+	if v, ok := value.(*string); ok {
+		return *v
 	}
 	marshal, err := json.Marshal(value)
 	if err != nil {

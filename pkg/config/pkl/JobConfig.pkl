@@ -27,7 +27,7 @@ class Test {
   method: "get" | "post" | "put" | "delete" | String = "get"
   body: RequestBody?
 
-  headers: Mapping?
+  headers: Mapping<String, String>?
   expected: Expectation = new {}
 }
 

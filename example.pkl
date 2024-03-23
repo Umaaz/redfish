@@ -22,6 +22,17 @@ jobs = new {
       new {
         url = "https://example.com/ping"
         expected {
+          status = 404
+        }
+      }
+    }
+  }
+  new {
+    name = "smoke test"
+    tests = new {
+      new {
+        url = "https://www.google.com"
+        expected {
           status = 200
         }
       }
