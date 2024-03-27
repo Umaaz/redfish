@@ -2,5 +2,7 @@
 package config
 
 type Extractor interface {
+	GetType() string
+
 	GetDefault() string
 }

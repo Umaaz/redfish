@@ -12,8 +12,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
+)
+
+var (
+	nonValueErr = errors.New("non value error")
 )
 
 type Config struct {
@@ -66,7 +71,8 @@ func (s *Service) RunJob(config *config.JobConfig) (*manager.JobResult, error) {
 			}
 			return result, nil
 		}
-		request, err := http.NewRequest(strings.ToUpper(test.Method), reqUrl, nil)
+
+		body, content, err := s.processRequestBody(test, result)
 		if err != nil {
 			err = s.handleError(result, test, err)
 			if err != nil {
@@ -76,13 +82,25 @@ func (s *Service) RunJob(config *config.JobConfig) (*manager.JobResult, error) {
 			return result, nil
 		}
 
+		request, err := http.NewRequest(strings.ToUpper(test.Method), reqUrl, body)
+		if err != nil {
+			err = s.handleError(result, test, err)
+			if err != nil {
+				logging.Logger.Info("Error running test", "app", s.app.GetName(), "job", config.Name, "test", *test.Name, "id", *test.Id, "err", err)
+				return nil, err
+			}
+			return result, nil
+		}
+
+		if content != "" {
+			request.Header.Add("content-type", content)
+		}
+
 		if test.Headers != nil {
 			for key, val := range *test.Headers {
 				request.Header.Add(key, val)
 			}
 		}
-		urlP, err := url.Parse(reqUrl)
-		request.Host = urlP.Host
 
 		res, err := client.Do(request)
 		if err != nil {
@@ -146,29 +164,36 @@ func (s *Service) handleError(result *manager.JobResult, test *config.Test, err 
 	return nil
 }
 
-func (s *Service) readValue(result *manager.JobResult, url any) (string, error) {
-	if v, ok := url.(string); ok {
+func (s *Service) readValue(result *manager.JobResult, input any) (string, error) {
+	if v, ok := input.(string); ok {
 		return v, nil
 	}
 
-	if v, ok := url.(config.DataSource); ok {
+	if v, ok := input.(*config.DataSource); ok {
 		id := v.SourceId
 		var source *manager.TestResult
 		if id == "" {
 			source = result.Results[len(result.Results)-1]
 		} else {
 			for _, testResult := range result.Results {
-				if testResult.Test.Id == &id {
+				if *testResult.Test.Id == id {
 					source = testResult
 					break
 				}
 			}
 		}
+
 		if source == nil {
 			return "", errors.New("cannot find datasource source: " + v.SourceId + ":" + v.Source)
 		}
+
+		switch v.Source {
+		case "response":
+			return s.readResponseValue(v, source)
+		}
 	}
-	return "", nil
+
+	return "", nonValueErr
 }
 
 func (s *Service) checkResponse(res *http.Response, test *config.Test) (*manager.TestResult, error) {
@@ -188,17 +213,30 @@ func (s *Service) checkResponse(res *http.Response, test *config.Test) (*manager
 	result.Assertions = append(result.Assertions, assertStatus)
 
 	if test.Expected.Body != nil {
-		result.Assertions = append(result.Assertions, s.checkResponseBody(res, test)...)
+		result.Assertions = append(result.Assertions, s.checkResponseBody(res, result, test)...)
 	}
 	return result, nil
 }
 
-func (s *Service) checkResponseBody(res *http.Response, test *config.Test) []*manager.Assertion {
+func (s *Service) checkResponseBody(res *http.Response, result *manager.TestResult, test *config.Test) []*manager.Assertion {
 	var asserts []*manager.Assertion
+
+	bodyBytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		asserts = append(asserts, &manager.Assertion{
+			Pass:    false,
+			Error:   false,
+			Type:    "BodyReadErr",
+			Message: err.Error(),
+		})
+
+		return asserts
+	}
+	result.Response = bodyBytes
+
 	body := *test.Expected.Body
 	if v, ok := body.(*config.JsonMatcherImpl); ok {
 		var data map[string]any
-		bodyBytes, _ := io.ReadAll(res.Body)
 
 		err := json.NewDecoder(bytes.NewBuffer(bodyBytes)).Decode(&data)
 		if err != nil {
@@ -211,9 +249,9 @@ func (s *Service) checkResponseBody(res *http.Response, test *config.Test) []*ma
 
 		} else {
 
-			var elem any = data
-			found := true
 			for path, expected := range v.Expected {
+				var elem any = data
+				found := true
 				for part := range s.walkPath(path) {
 					if elem == nil {
 						asserts = append(asserts, &manager.Assertion{
@@ -302,4 +340,153 @@ func (s *Service) walkPath(path string) chan string {
 	}(path)
 
 	return channel
+}
+
+func (s *Service) processRequestBody(test *config.Test, result *manager.JobResult) (io.Reader, string, error) {
+	if test.Body == nil {
+		return nil, "", nil
+	}
+
+	body := *test.Body
+	switch body.GetType() {
+	case "json":
+		return s.processJsonBody(body.(config.JsonBody), result)
+	case "form":
+		return s.processFormBody(body.(config.FormBody), result)
+	}
+	return nil, "", nil
+}
+
+func (s *Service) processJsonBody(body config.JsonBody, result *manager.JobResult) (io.Reader, string, error) {
+
+	processBody, err := s.processObject(body.GetParams(), result)
+	if err != nil {
+		return nil, "", errors.Join(errors.New("failed to process json input"), err)
+	}
+
+	marshal, err := json.Marshal(processBody)
+	if err != nil {
+		return nil, "", errors.Join(errors.New("failed to marshal json"), err)
+	}
+
+	return bytes.NewReader(marshal), "application/json", nil
+}
+
+func (s *Service) processObject(params map[any]any, result *manager.JobResult) (map[string]any, error) {
+	nMap := make(map[string]any, len(params))
+	for k, v := range params {
+
+		key, err := s.readValue(result, k)
+		if err != nil {
+			return nil, errors.Join(errors.New("cannot process key for object"), err)
+		}
+
+		value, err := s.readObjectValue(v, result)
+		if err != nil {
+			return nil, errors.Join(errors.New("cannot process value for object"), err)
+		}
+		nMap[key] = value
+	}
+	return nMap, nil
+}
+
+func (s *Service) readObjectValue(input any, result *manager.JobResult) (any, error) {
+	value, err := s.readValue(result, input)
+	if err != nil {
+		if errors.Is(err, nonValueErr) {
+			if val, ok := input.(map[any]any); ok {
+				child, err := s.processObject(val, result)
+				if err != nil {
+					return nil, errors.Join(errors.New("cannot process object"), err)
+				}
+				return child, nil
+			}
+			if val, ok := input.([]any); ok {
+				child, err := s.processSlice(val, result)
+				if err != nil {
+					return nil, errors.Join(errors.New("cannot process object"), err)
+				}
+				return child, nil
+			}
+		}
+		return nil, errors.Join(errors.New("cannot process object"), err)
+	}
+	return value, nil
+}
+
+func (s *Service) processSlice(val []any, result *manager.JobResult) ([]any, error) {
+	nSlice := make([]any, len(val))
+
+	for i, v := range val {
+		value, err := s.readObjectValue(v, result)
+		if err != nil {
+			return nil, errors.Join(errors.New("cannot process value for object"), err)
+		}
+		nSlice[i] = value
+	}
+
+	return nSlice, nil
+}
+
+func (s *Service) readResponseValue(v *config.DataSource, source *manager.TestResult) (string, error) {
+	body := source.Response
+	if body == nil {
+		return "", errors.New("no response from source: " + *source.Test.Id)
+	}
+
+	switch v.Extractor.GetType() {
+	case "json":
+		var data map[string]any
+		err := json.Unmarshal(body, &data)
+		if err != nil {
+			return "", errors.New("invalid json response from source: " + *source.Test.Id)
+		}
+		return s.extractFromJsonObject(v.Extractor.(config.JsonExtractor), data)
+	}
+	return "", nil
+}
+
+func (s *Service) extractFromJsonObject(extractor config.JsonExtractor, data map[string]any) (string, error) {
+	path := extractor.GetPath()
+
+	haystack := data
+	for part := range s.walkPath(path) {
+		if v, ok := haystack[part]; ok {
+			if v, k := v.(string); k {
+				return v, nil
+			}
+			if v, k := v.(map[string]any); k {
+				haystack = v
+				continue
+			}
+			if v, k := v.([]any); k {
+				haystack = make(map[string]any, len(v))
+				for i, item := range v {
+					haystack[strconv.Itoa(i)] = item
+				}
+			}
+		}
+		return "", errors.New(fmt.Sprintf("path %s not found in object", part))
+	}
+	return "", errors.New(fmt.Sprintf("path %s not found in object", path))
+}
+
+func (s *Service) processFormBody(body config.FormBody, result *manager.JobResult) (io.Reader, string, error) {
+
+	processBody, err := s.processObject(body.GetParams(), result)
+	if err != nil {
+		return nil, "", errors.Join(errors.New("failed to process json input"), err)
+	}
+
+	form := url.Values{}
+
+	for k, val := range processBody {
+		if v, ok := val.(string); ok {
+			form.Add(k, v)
+			continue
+		}
+		return nil, "", errors.New(fmt.Sprintf("non string value for form body %s", val))
+	}
+
+	return strings.NewReader(form.Encode()), "application/x-www-form-urlencoded", nil
 }

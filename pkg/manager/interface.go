@@ -32,6 +32,8 @@ type TestResult struct {
 	Test       *config.Test
 	Time       float64
 	Assertions []*Assertion
+
+	Response []byte
 }
 
 type Assertion struct {

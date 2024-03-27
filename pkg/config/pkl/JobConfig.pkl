@@ -74,9 +74,11 @@ class JsonBody extends RequestBody {
 }
 
 abstract class Extractor {
+  type: String
   default: String = ""
 }
 
 class JsonExtractor extends Extractor {
+  type = "json"
   path: String
 }
