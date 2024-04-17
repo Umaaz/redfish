@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"github.com/Umaaz/redfish/pkg/config/pkl/gen/appconfig"
 	"os"
+
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/appconfig"
 )
 
 func main() {

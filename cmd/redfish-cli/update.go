@@ -12,7 +12,6 @@ type Update struct {
 }
 
 func (u Update) Run(opts *globalOptions) error {
-
 	loadConfig, err := LoadConfig(u.File, u.pklOptions)
 	if err != nil {
 		return nil

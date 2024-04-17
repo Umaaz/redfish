@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"encoding/xml"
+	"os"
+
 	"github.com/Umaaz/redfish/pkg/format/junit"
 	"github.com/Umaaz/redfish/pkg/manager/local"
 	"github.com/Umaaz/redfish/pkg/producer"
 	"github.com/Umaaz/redfish/pkg/utils/logging"
-	"os"
 )
 
 type Run struct {
@@ -18,7 +19,6 @@ type Run struct {
 }
 
 func (r Run) Run(opts *globalOptions) error {
-
 	loadConfig, err := LoadConfig(r.File, r.pklOptions)
 	if err != nil {
 		logging.Logger.Error("cannot load config", "err", err)
@@ -47,7 +47,7 @@ func (r Run) Run(opts *globalOptions) error {
 
 		out, _ := xml.MarshalIndent(convert, " ", "  ")
 
-		err = os.WriteFile(r.Output, []byte(xml.Header+string(out)), 0644)
+		err = os.WriteFile(r.Output, []byte(xml.Header+string(out)), 0o644)
 		if err != nil {
 			logging.Logger.Error("cannot write file", "err", err)
 			return err

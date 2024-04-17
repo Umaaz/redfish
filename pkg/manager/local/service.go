@@ -5,25 +5,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Umaaz/redfish/pkg/config/pkl/gen/appconfig"
-	"github.com/Umaaz/redfish/pkg/config/pkl/gen/jobconfig"
-	"github.com/Umaaz/redfish/pkg/manager"
-	"github.com/Umaaz/redfish/pkg/utils/logging"
-	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/appconfig"
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/jobconfig"
+	"github.com/Umaaz/redfish/pkg/manager"
+	"github.com/Umaaz/redfish/pkg/utils/logging"
+	"github.com/google/uuid"
 )
 
-var (
-	nonValueErr = errors.New("non value error")
-)
+var nonValueErr = errors.New("non value error")
 
-type Config struct {
-}
+type Config struct{}
 
 type Service struct {
 	manager.Manager
@@ -255,9 +253,7 @@ func (s *Service) checkResponseBody(res *http.Response, result *manager.TestResu
 				Type:    "JSONBodyDecode",
 				Message: err.Error(),
 			})
-
 		} else {
-
 			for path, expected := range v.Expected {
 				var elem any = data
 				found := true
@@ -367,7 +363,6 @@ func (s *Service) processRequestBody(test *jobconfig.Test, result *manager.JobRe
 }
 
 func (s *Service) processJsonBody(body jobconfig.JsonBody, result *manager.JobResult) (io.Reader, string, error) {
-
 	processBody, err := s.processObject(body.GetParams(), result)
 	if err != nil {
 		return nil, "", errors.Join(errors.New("failed to process json input"), err)
@@ -481,7 +476,6 @@ func (s *Service) extractFromJsonObject(extractor jobconfig.JsonExtractor, data 
 }
 
 func (s *Service) processFormBody(body jobconfig.FormBody, result *manager.JobResult) (io.Reader, string, error) {
-
 	processBody, err := s.processObject(body.GetParams(), result)
 	if err != nil {
 		return nil, "", errors.Join(errors.New("failed to process json input"), err)

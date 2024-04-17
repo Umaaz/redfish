@@ -1,8 +1,9 @@
 package manager
 
 import (
-	"github.com/Umaaz/redfish/pkg/config/pkl/gen/jobconfig"
 	"time"
+
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/jobconfig"
 )
 
 type Manager interface {

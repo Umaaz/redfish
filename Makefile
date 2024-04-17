@@ -24,10 +24,10 @@ GO_JUNIT_REPORT=2>&1 | go-junit-report -parser gojson -iocopy -out report.xml
 test-with-cover-report:
 	go test -race -timeout 20m -count=1 -v -cover -json $(ALL_PKGS) $(GO_JUNIT_REPORT)
 
+FILES_TO_FMT=$(shell find . -type d \( -path ./vendor \) -prune -o -name '*.go' -not -name "*.pb.go" -not -name '*.y.go' -print)
 
 .PHONY: fmt check-fmt
 fmt:
-	echo $(FILES_TO_FMT)
 	@gofumpt -l -w .
 	@goimports -w $(FILES_TO_FMT)
 

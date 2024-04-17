@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/Umaaz/redfish/pkg/manager"
 	"time"
+
+	"github.com/Umaaz/redfish/pkg/manager"
 )
 
 type TestResults struct {
@@ -117,7 +118,6 @@ func Convert(results manager.TestContext) (TestResults, error) {
 }
 
 func parseResult(result *manager.JobResult) TestSuite {
-
 	totals := struct {
 		tests      uint
 		failures   uint
@@ -152,7 +152,6 @@ func parseResult(result *manager.JobResult) TestSuite {
 }
 
 func parseTestResult(job *manager.JobResult, result *manager.TestResult) (TestCase, uint, uint) {
-
 	var failures []Failure
 	errors := uint(0)
 

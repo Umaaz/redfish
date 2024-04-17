@@ -3,6 +3,7 @@ package producer
 import (
 	"context"
 	"errors"
+
 	producercfg "github.com/Umaaz/redfish/pkg/config/pkl/gen/producer"
 	"github.com/Umaaz/redfish/pkg/format/junit"
 	"github.com/Umaaz/redfish/pkg/producer/prometheus"

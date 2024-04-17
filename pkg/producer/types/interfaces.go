@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+
 	"github.com/Umaaz/redfish/pkg/format/junit"
 )
 
