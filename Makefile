@@ -7,7 +7,7 @@ build-go:
 
 .PHONY: gen-pkl
 gen-pkl:
-	PKL_EXEC=${PWD}/pkl pkl-gen-go pkg/config/pkl/AppCopnfig.pkl --generator-settings pkg/config/pkl/generator-settings.pkl
+	pkl-gen-go pkg/config/pkl/AppCopnfig.pkl --generator-settings pkg/config/pkl/generator-settings.pkl
 
 .PHONY: docker
 docker:
