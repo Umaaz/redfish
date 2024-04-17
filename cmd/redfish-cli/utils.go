@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/Umaaz/redfish/pkg/config/pkl/gen/appconfig"
-	"github.com/Umaaz/redfish/pkg/utils/logging"
 	"os"
 	"path/filepath"
+
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/appconfig"
+	"github.com/Umaaz/redfish/pkg/utils/logging"
 )
 
 func LoadConfig(file string, opts pklOptions) (appconfig.App, error) {

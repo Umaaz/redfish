@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"slices"
+	"time"
+
 	"github.com/Umaaz/redfish/pkg/config/pkl/gen/producer"
 	"github.com/Umaaz/redfish/pkg/format/junit"
 	"github.com/Umaaz/redfish/pkg/producer/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
 	"github.com/prometheus/prometheus/prompb"
-	"io"
-	"net/http"
-	"slices"
-	"time"
 )
 
 type prometheusService struct {

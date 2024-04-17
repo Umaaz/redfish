@@ -1,0 +1,108 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Go 1.22
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup go-junit-report
+        run: go install github.com/jstemmer/go-junit-report/v2@latest
+
+      - name: Test
+        run: make test-with-cover-report
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1.8.0
+        if: success() || failure()
+        continue-on-error: true
+        with:
+          name: GO Tests
+          path: report.xml
+          reporter: java-junit
+
+      - name: Test Summary
+        uses: test-summary/action@v2
+        with:
+          paths: |
+            report.xml
+        if: success() || failure()
+        continue-on-error: true
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.22
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Vendor
+        run: go mod vendor
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: build --clean --snapshot
+
+  vendor-check:
+    name: Vendor check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.22
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Install pkl
+        uses: pkl-community/setup-pkl@v0
+        with:
+          pkl-version: 0.25.2
+
+      - run: go install github.com/apple/pkl-go/cmd/pkl-gen-go@latest
+
+      - name: Check vendor
+        run: make vendor-check
+
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.22
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - run: go install mvdan.cc/gofumpt@latest
+      - run: go install golang.org/x/tools/cmd/goimports@latest
+
+      - run: make check-fmt

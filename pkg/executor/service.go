@@ -2,8 +2,7 @@ package executor
 
 import "github.com/Umaaz/redfish/pkg/config/pkl/gen/appconfig"
 
-type Config struct {
-}
+type Config struct{}
 
 type Service struct {
 	cfg Config

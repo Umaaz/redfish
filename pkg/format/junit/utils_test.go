@@ -3,13 +3,14 @@ package junit
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/Umaaz/redfish/pkg/config/pkl/gen/jobconfig"
 	"testing"
+
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/jobconfig"
 )
 
 func TestXmlFormat(t *testing.T) {
 	results := TestResults{
-		Time: 01,
+		Time: 0o1,
 		TestSuites: []TestSuite{
 			{
 				Name: "test1", Time: 12,
