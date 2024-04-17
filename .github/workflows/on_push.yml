@@ -80,8 +80,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Setup Pkl
-        uses: pkl-community/setup-pkl@v0.0.1
+      - name: Install pkl
+        uses: pkl-community/setup-pkl@v0
+        with:
+          pkl-version: 0.25.2
 
       - run: go install github.com/apple/pkl-go/cmd/pkl-gen-go@latest
 
