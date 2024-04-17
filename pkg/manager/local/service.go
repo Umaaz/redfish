@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Umaaz/redfish/pkg/config"
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/appconfig"
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/jobconfig"
 	"github.com/Umaaz/redfish/pkg/manager"
 	"github.com/Umaaz/redfish/pkg/utils/logging"
 	"github.com/google/uuid"
@@ -28,23 +29,28 @@ type Service struct {
 	manager.Manager
 
 	cfg *Config
-	app config.App
+	app appconfig.App
 
 	results []*manager.JobResult
 }
 
-func NewService(config *Config, app config.App) (manager.Manager, error) {
+func NewService(config *Config, app appconfig.App) (manager.Manager, error) {
 	return &Service{
 		cfg: config,
 		app: app,
 	}, nil
 }
 
-func (s *Service) RunJob(config *config.JobConfig) (*manager.JobResult, error) {
+func (s *Service) RunJob(config *jobconfig.JobConfig, name string, i int) (*manager.JobResult, error) {
 	logging.Logger.Info("Running Job", "app", s.app.GetName(), "job", config.Name)
 	result := &manager.JobResult{
 		Config:    config,
 		Timestamp: time.Now(),
+	}
+	if config.Name != "" {
+		result.Name = config.Name
+	} else {
+		config.Name = fmt.Sprintf("%s Suite: %d", name, i)
 	}
 
 	client := http.Client{
@@ -52,6 +58,7 @@ func (s *Service) RunJob(config *config.JobConfig) (*manager.JobResult, error) {
 	}
 
 	for _, test := range config.Tests {
+		tStart := time.Now()
 		if test.Id == nil {
 			u := uuid.New().String()
 			test.Id = &u
@@ -121,9 +128,11 @@ func (s *Service) RunJob(config *config.JobConfig) (*manager.JobResult, error) {
 			}
 			return result, nil
 		}
+		testResult.Duration = time.Now().Sub(tStart).Milliseconds()
 		result.Results = append(result.Results, testResult)
 	}
-	result.Time = time.Now().Sub(result.Timestamp).Seconds()
+	result.Duration = time.Now().Sub(result.Timestamp).Milliseconds()
+	logging.Logger.Info(fmt.Sprintf("test complete in (%d)ms", result.Duration))
 	return result, nil
 }
 
@@ -133,7 +142,7 @@ func (s *Service) RunAllJobs() (manager.TestContext, error) {
 	logging.Logger.Info("Running Jobs in app.", "app", s.app.GetName())
 	results := make([]*manager.JobResult, len(jobs))
 	for i, job := range jobs {
-		res, _ := s.RunJob(job)
+		res, _ := s.RunJob(job, s.app.GetName(), i)
 		results[i] = res
 	}
 
@@ -141,13 +150,13 @@ func (s *Service) RunAllJobs() (manager.TestContext, error) {
 	return manager.TestContext{
 		Name:      s.app.GetName(),
 		Timestamp: start,
-		Time:      time.Now().Sub(start).Seconds(),
+		Duration:  time.Now().Sub(start).Milliseconds(),
 		File:      *file,
 		Results:   results,
 	}, nil
 }
 
-func (s *Service) handleError(result *manager.JobResult, test *config.Test, err error) error {
+func (s *Service) handleError(result *manager.JobResult, test *jobconfig.Test, err error) error {
 	logging.Logger.Info("handling error from test", "app", s.app.GetName(), "job", result.Config.Name, "test", *test.Name, "id", *test.Id, "err", err)
 	tResult := &manager.TestResult{
 		Test: test,
@@ -169,7 +178,7 @@ func (s *Service) readValue(result *manager.JobResult, input any) (string, error
 		return v, nil
 	}
 
-	if v, ok := input.(*config.DataSource); ok {
+	if v, ok := input.(*jobconfig.DataSource); ok {
 		id := v.SourceId
 		var source *manager.TestResult
 		if id == "" {
@@ -196,7 +205,7 @@ func (s *Service) readValue(result *manager.JobResult, input any) (string, error
 	return "", nonValueErr
 }
 
-func (s *Service) checkResponse(res *http.Response, test *config.Test) (*manager.TestResult, error) {
+func (s *Service) checkResponse(res *http.Response, test *jobconfig.Test) (*manager.TestResult, error) {
 	result := &manager.TestResult{
 		Test: test,
 	}
@@ -218,7 +227,7 @@ func (s *Service) checkResponse(res *http.Response, test *config.Test) (*manager
 	return result, nil
 }
 
-func (s *Service) checkResponseBody(res *http.Response, result *manager.TestResult, test *config.Test) []*manager.Assertion {
+func (s *Service) checkResponseBody(res *http.Response, result *manager.TestResult, test *jobconfig.Test) []*manager.Assertion {
 	var asserts []*manager.Assertion
 
 	bodyBytes, err := io.ReadAll(res.Body)
@@ -235,7 +244,7 @@ func (s *Service) checkResponseBody(res *http.Response, result *manager.TestResu
 	result.Response = bodyBytes
 
 	body := *test.Expected.Body
-	if v, ok := body.(*config.JsonMatcherImpl); ok {
+	if v, ok := body.(*jobconfig.JsonMatcherImpl); ok {
 		var data map[string]any
 
 		err := json.NewDecoder(bytes.NewBuffer(bodyBytes)).Decode(&data)
@@ -342,7 +351,7 @@ func (s *Service) walkPath(path string) chan string {
 	return channel
 }
 
-func (s *Service) processRequestBody(test *config.Test, result *manager.JobResult) (io.Reader, string, error) {
+func (s *Service) processRequestBody(test *jobconfig.Test, result *manager.JobResult) (io.Reader, string, error) {
 	if test.Body == nil {
 		return nil, "", nil
 	}
@@ -350,14 +359,14 @@ func (s *Service) processRequestBody(test *config.Test, result *manager.JobResul
 	body := *test.Body
 	switch body.GetType() {
 	case "json":
-		return s.processJsonBody(body.(config.JsonBody), result)
+		return s.processJsonBody(body.(jobconfig.JsonBody), result)
 	case "form":
-		return s.processFormBody(body.(config.FormBody), result)
+		return s.processFormBody(body.(jobconfig.FormBody), result)
 	}
 	return nil, "", nil
 }
 
-func (s *Service) processJsonBody(body config.JsonBody, result *manager.JobResult) (io.Reader, string, error) {
+func (s *Service) processJsonBody(body jobconfig.JsonBody, result *manager.JobResult) (io.Reader, string, error) {
 
 	processBody, err := s.processObject(body.GetParams(), result)
 	if err != nil {
@@ -428,7 +437,7 @@ func (s *Service) processSlice(val []any, result *manager.JobResult) ([]any, err
 	return nSlice, nil
 }
 
-func (s *Service) readResponseValue(v *config.DataSource, source *manager.TestResult) (string, error) {
+func (s *Service) readResponseValue(v *jobconfig.DataSource, source *manager.TestResult) (string, error) {
 	body := source.Response
 	if body == nil {
 		return "", errors.New("no response from source: " + *source.Test.Id)
@@ -441,12 +450,12 @@ func (s *Service) readResponseValue(v *config.DataSource, source *manager.TestRe
 		if err != nil {
 			return "", errors.New("invalid json response from source: " + *source.Test.Id)
 		}
-		return s.extractFromJsonObject(v.Extractor.(config.JsonExtractor), data)
+		return s.extractFromJsonObject(v.Extractor.(jobconfig.JsonExtractor), data)
 	}
 	return "", nil
 }
 
-func (s *Service) extractFromJsonObject(extractor config.JsonExtractor, data map[string]any) (string, error) {
+func (s *Service) extractFromJsonObject(extractor jobconfig.JsonExtractor, data map[string]any) (string, error) {
 	path := extractor.GetPath()
 
 	haystack := data
@@ -471,7 +480,7 @@ func (s *Service) extractFromJsonObject(extractor config.JsonExtractor, data map
 	return "", errors.New(fmt.Sprintf("path %s not found in object", path))
 }
 
-func (s *Service) processFormBody(body config.FormBody, result *manager.JobResult) (io.Reader, string, error) {
+func (s *Service) processFormBody(body jobconfig.FormBody, result *manager.JobResult) (io.Reader, string, error) {
 
 	processBody, err := s.processObject(body.GetParams(), result)
 	if err != nil {

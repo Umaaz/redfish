@@ -1,22 +1,26 @@
 // Code generated from Pkl module `redfish.config.app`. DO NOT EDIT.
-package config
+package appconfig
 
 import (
 	"context"
 
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/jobconfig"
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/producer"
 	"github.com/apple/pkl-go/pkl"
 )
 
 type App interface {
-	Job
+	jobconfig.Job
 
 	GetFile() *string
 
 	GetName() string
 
-	GetJobs() []*JobConfig
+	GetJobs() []*jobconfig.JobConfig
 
-	GetRules() []*RuleConfig
+	GetRules() []*jobconfig.RuleConfig
+
+	GetProducer() *producer.Producer
 }
 
 var _ App = (*AppImpl)(nil)
@@ -26,9 +30,11 @@ type AppImpl struct {
 
 	Name string `pkl:"name" json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
 
-	Jobs []*JobConfig `pkl:"jobs" json:"jobs,omitempty" toml:"jobs,omitempty" yaml:"jobs,omitempty"`
+	Jobs []*jobconfig.JobConfig `pkl:"jobs" json:"jobs,omitempty" toml:"jobs,omitempty" yaml:"jobs,omitempty"`
 
-	Rules []*RuleConfig `pkl:"rules" json:"rules,omitempty" toml:"rules,omitempty" yaml:"rules,omitempty"`
+	Rules []*jobconfig.RuleConfig `pkl:"rules" json:"rules,omitempty" toml:"rules,omitempty" yaml:"rules,omitempty"`
+
+	Producer *producer.Producer `pkl:"producer" json:"producer,omitempty" toml:"producer,omitempty" yaml:"producer,omitempty"`
 }
 
 func (rcv *AppImpl) GetFile() *string {
@@ -39,12 +45,16 @@ func (rcv *AppImpl) GetName() string {
 	return rcv.Name
 }
 
-func (rcv *AppImpl) GetJobs() []*JobConfig {
+func (rcv *AppImpl) GetJobs() []*jobconfig.JobConfig {
 	return rcv.Jobs
 }
 
-func (rcv *AppImpl) GetRules() []*RuleConfig {
+func (rcv *AppImpl) GetRules() []*jobconfig.RuleConfig {
 	return rcv.Rules
+}
+
+func (rcv *AppImpl) GetProducer() *producer.Producer {
+	return rcv.Producer
 }
 
 // LoadFromPath loads the pkl module at the given path and evaluates it into a App

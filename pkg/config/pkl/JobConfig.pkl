@@ -1,4 +1,4 @@
-@go.Package { name = "github.com/Umaaz/redfish/pkg/config" }
+@go.Package { name = "github.com/Umaaz/redfish/pkg/config/pkl/gen/jobconfig" }
 @go.Field {
   structTags {
     ["toml"] = "%{name},omitempty"

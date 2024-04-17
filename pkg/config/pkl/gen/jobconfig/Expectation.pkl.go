@@ -1,5 +1,5 @@
 // Code generated from Pkl module `pickle.config.job`. DO NOT EDIT.
-package config
+package jobconfig
 
 type Expectation struct {
 	Status int `pkl:"status" json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty"`

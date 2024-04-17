@@ -1,0 +1,42 @@
+@go.Package { name = "github.com/Umaaz/redfish/pkg/config/pkl/gen/producer" }
+@go.Field {
+  structTags {
+    ["toml"] = "%{name},omitempty"
+    ["json"] = "%{name},omitempty"
+    ["yaml"] = "%{name},omitempty"
+  }
+}
+module pickle.config.producer
+
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.5.3#/go.pkl"
+
+abstract class HttpEndpoint {
+  url: String
+  path: String = ""
+  timeout: Int = 30
+  headers: Mapping<String, String>?
+}
+
+class PrometheusProducer extends HttpEndpoint {
+  type = "prometheus"
+  path = "/api/v1/push"
+  labels: Listing<Label> = new {
+    new {
+      name = "name"
+    }
+    new {
+      name = "suite_name"
+    }
+    new {
+      name = "test_name"
+    }
+  }
+  customLables: Listing<Label>?
+}
+
+class Label {
+  name: String
+  value: String = ""
+}
+
+prometheus: PrometheusProducer?

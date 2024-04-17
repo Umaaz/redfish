@@ -1,7 +1,8 @@
-@go.Package { name = "github.com/Umaaz/redfish/pkg/config" }
+@go.Package { name = "github.com/Umaaz/redfish/pkg/config/pkl/gen/appconfig" }
 module redfish.config.app
 
-extends "JobConfig.pkl"
+extends "./JobConfig.pkl"
+import "Producer.pkl"
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.5.3#/go.pkl"
 
@@ -12,3 +13,5 @@ name: String
 jobs: Listing<JobConfig>
 
 rules: Listing<RuleConfig>
+
+producer: Producer?

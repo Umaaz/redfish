@@ -1,19 +1,19 @@
 package manager
 
 import (
-	"github.com/Umaaz/redfish/pkg/config"
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/jobconfig"
 	"time"
 )
 
 type Manager interface {
-	RunJob(config *config.JobConfig) (*JobResult, error)
+	RunJob(config *jobconfig.JobConfig, name string, i int) (*JobResult, error)
 	RunAllJobs() (TestContext, error)
 }
 
 type TestContext struct {
 	Name      string
 	Timestamp time.Time
-	Time      float64
+	Duration  int64
 	File      string
 
 	Results []*JobResult
@@ -22,15 +22,15 @@ type TestContext struct {
 type JobResult struct {
 	Name      string
 	Timestamp time.Time
-	Time      float64
+	Duration  int64
 	File      string
-	Config    *config.JobConfig
+	Config    *jobconfig.JobConfig
 	Results   []*TestResult
 }
 
 type TestResult struct {
-	Test       *config.Test
-	Time       float64
+	Test       *jobconfig.Test
+	Duration   int64
 	Assertions []*Assertion
 
 	Response []byte

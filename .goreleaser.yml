@@ -1,0 +1,114 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+
+archives:
+  - id: default
+    builds:
+      - cli
+      - redfish
+
+builds:
+  - id: cli
+    main: ./cmd/redfish-cli
+    binary: redfish-cli
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goarch: arm
+        goos: darwin
+      - goarch: arm
+        goos: windows
+      - goarch: arm64
+        goos: windows
+    flags:
+      - -v
+      - -trimpath
+    ldflags:
+      - -s
+      - -w
+      - -X main.Branch={{ .Branch }}
+      - -X main.Revision={{ .ShortCommit }}
+      - -X main.Version={{ .Version }}
+  - id: redfish
+    main: ./cmd/redfish
+    binary: redfish
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goarch: arm
+        goos: darwin
+      - goarch: arm
+        goos: windows
+      - goarch: arm64
+        goos: windows
+    flags:
+      - -v
+      - -trimpath
+    ldflags:
+      - -s
+      - -w
+      - -X main.Branch={{ .Branch }}
+      - -X main.Revision={{ .ShortCommit }}
+      - -X main.Version={{ .Version }}
+
+kos:
+  - id: cli
+    main: ./cmd/redfish-cli
+    env:
+      - CGO_ENABLED=0
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    flags:
+      - -v
+      - -trimpath
+    ldflags:
+      - -s
+      - -w
+      - -X main.Branch={{ .Branch }}
+      - -X main.Revision={{ .ShortCommit }}
+      - -X main.Version={{ .Version }}
+    repository: intergral
+    tags:
+      - latest
+      - '{{.Version}}'
+    base_import_paths: true
+  - id: redfish
+    main: ./cmd/redfish
+    env:
+      - CGO_ENABLED=0
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    flags:
+      - -v
+      - -trimpath
+    ldflags:
+      - -s
+      - -w
+      - -X main.Branch={{ .Branch }}
+      - -X main.Revision={{ .ShortCommit }}
+      - -X main.Version={{ .Version }}
+    repository: intergral
+    tags:
+      - latest
+      - '{{.Version}}'
+    base_import_paths: true
+
+checksum:
+  name_template: SHA256SUMS
+
+changelog:
+  disable: true
+
+release:
+  prerelease: auto

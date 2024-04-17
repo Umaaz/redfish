@@ -3,7 +3,7 @@ package junit
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/Umaaz/redfish/pkg/config"
+	"github.com/Umaaz/redfish/pkg/config/pkl/gen/jobconfig"
 	"testing"
 )
 
@@ -118,12 +118,12 @@ func TestAsString(t *testing.T) {
 		},
 		{
 			name:     "nil",
-			input:    config.Test{}.Body,
+			input:    jobconfig.Test{}.Body,
 			expected: "null",
 		},
 		{
 			name:     "nil",
-			input:    config.Test{}.Headers,
+			input:    jobconfig.Test{}.Headers,
 			expected: "null",
 		},
 	}

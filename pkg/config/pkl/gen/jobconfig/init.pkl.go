@@ -1,10 +1,9 @@
-// Code generated from Pkl module `redfish.config.app`. DO NOT EDIT.
-package config
+// Code generated from Pkl module `pickle.config.job`. DO NOT EDIT.
+package jobconfig
 
 import "github.com/apple/pkl-go/pkl"
 
 func init() {
-	pkl.RegisterMapping("redfish.config.app", AppImpl{})
 	pkl.RegisterMapping("pickle.config.job#JobConfig", JobConfig{})
 	pkl.RegisterMapping("pickle.config.job#Test", Test{})
 	pkl.RegisterMapping("pickle.config.job#DataSource", DataSource{})

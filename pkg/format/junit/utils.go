@@ -11,7 +11,7 @@ import (
 type TestResults struct {
 	XMLName xml.Name `xml:"testsuites"`
 
-	Time       float64   `xml:"time,attr"`
+	Time       int64     `xml:"time,attr"`
 	Name       string    `xml:"name,omitempty,attr"`
 	Tests      uint      `xml:"tests,omitempty,attr"`
 	Failures   uint      `xml:"failures,omitempty,attr"`
@@ -27,7 +27,7 @@ type TestResults struct {
 type TestSuite struct {
 	XMLName xml.Name `xml:"testsuite"`
 
-	Time       float64   `xml:"time,attr"`
+	Time       int64     `xml:"time,attr"`
 	Name       string    `xml:"name,omitempty,attr"`
 	Tests      uint      `xml:"tests,omitempty,attr"`
 	Failures   uint      `xml:"failures,omitempty,attr"`
@@ -44,18 +44,21 @@ type Property struct {
 	XMLName xml.Name `xml:"property"`
 
 	Name  string `xml:"name,attr"`
-	Value string `xml:"value,attr"`
+	Value string `xml:"value,attr,omitempty"`
 	Text  string `xml:",chardata"`
 }
 
 type TestCase struct {
 	XMLName xml.Name `xml:"testcase"`
 
-	File       string  `xml:"file,attr,omitempty"`
-	Name       string  `xml:"name,attr,omitempty"`
-	Time       float64 `xml:"time,attr,omitempty"`
-	Assertions uint    `xml:"assertions,omitempty,attr"`
-	Line       uint    `xml:"line,omitempty,attr"`
+	File       string `xml:"file,attr,omitempty"`
+	Name       string `xml:"name,attr,omitempty"`
+	Time       int64  `xml:"time,attr,omitempty"`
+	Assertions uint   `xml:"assertions,omitempty,attr"`
+	Line       uint   `xml:"line,omitempty,attr"`
+
+	FailureCount uint `xml:"-"`
+	ErrorCount   uint `xml:"-"`
 
 	Failures   []Failure
 	SystemOut  SystemOut `xml:"system-out"`
@@ -98,7 +101,7 @@ func Convert(results manager.TestContext) (TestResults, error) {
 	}
 
 	return TestResults{
-		Time:      results.Time,
+		Time:      results.Duration,
 		Name:      results.Name,
 		File:      results.File,
 		Timestamp: results.Timestamp,
@@ -135,7 +138,7 @@ func parseResult(result *manager.JobResult) TestSuite {
 	}
 
 	return TestSuite{
-		Time:       result.Time,
+		Time:       result.Duration,
 		Name:       result.Name,
 		Tests:      totals.tests,
 		Failures:   totals.failures,
@@ -166,14 +169,16 @@ func parseTestResult(job *manager.JobResult, result *manager.TestResult) (TestCa
 	}
 
 	return TestCase{
-		File:       job.File,
-		Name:       *result.Test.Name,
-		Time:       result.Time,
-		Assertions: uint(len(result.Assertions)),
-		Line:       0,
-		Failures:   failures,
-		SystemOut:  SystemOut{},
-		SystemErr:  SystemOut{},
+		File:         job.File,
+		Name:         *result.Test.Name,
+		Time:         result.Duration,
+		Assertions:   uint(len(result.Assertions)),
+		Line:         0,
+		Failures:     failures,
+		ErrorCount:   errors,
+		FailureCount: uint(len(failures)),
+		SystemOut:    SystemOut{},
+		SystemErr:    SystemOut{},
 		Properties: struct{ Properties []Property }{Properties: []Property{
 			{Name: "url", Value: asString(result.Test.Url)},
 			{Name: "method", Value: result.Test.Method},

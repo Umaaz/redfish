@@ -1,5 +1,5 @@
 // Code generated from Pkl module `pickle.config.job`. DO NOT EDIT.
-package config
+package jobconfig
 
 type DataSource struct {
 	SourceId string `pkl:"sourceId" json:"sourceId,omitempty" toml:"sourceId,omitempty" yaml:"sourceId,omitempty"`

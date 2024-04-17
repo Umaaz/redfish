@@ -1,8 +1,6 @@
 // Code generated from Pkl module `pickle.config.job`. DO NOT EDIT.
-package config
+package jobconfig
 
-type Extractor interface {
+type RequestBody interface {
 	GetType() string
-
-	GetDefault() string
 }

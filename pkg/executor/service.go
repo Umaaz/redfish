@@ -1,16 +1,16 @@
 package executor
 
-import "github.com/Umaaz/redfish/pkg/config"
+import "github.com/Umaaz/redfish/pkg/config/pkl/gen/appconfig"
 
 type Config struct {
 }
 
 type Service struct {
 	cfg Config
-	app config.App
+	app appconfig.App
 }
 
-func NewService(config Config, app config.App) (*Service, error) {
+func NewService(config Config, app appconfig.App) (*Service, error) {
 	return &Service{
 		cfg: config,
 		app: app,
