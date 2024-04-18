@@ -217,10 +217,10 @@ func (s *Service) checkResponse(res *http.Response, test *jobconfig.Test) (*mana
 		assertStatus.Message = fmt.Sprintf("%d != %d", test.Expected.Status, res.StatusCode)
 		assertStatus.Pass = false
 	}
-	result.Assertions = append(result.Assertions, assertStatus)
+	result.Assertions = append(result.Assertions, s.logAssertions(assertStatus)...)
 
 	if test.Expected.Body != nil {
-		result.Assertions = append(result.Assertions, s.checkResponseBody(res, result, test)...)
+		result.Assertions = append(result.Assertions, s.logAssertions(s.checkResponseBody(res, result, test)...)...)
 	}
 	return result, nil
 }
@@ -279,6 +279,11 @@ func (s *Service) checkResponseBody(res *http.Response, result *manager.TestResu
 						}
 						elem = v
 					} else {
+						if expected == nil && v == nil {
+							found = true
+							elem = nil
+							break
+						}
 						asserts = append(asserts, &manager.Assertion{
 							Pass:    false,
 							Error:   false,
@@ -492,4 +497,13 @@ func (s *Service) processFormBody(body jobconfig.FormBody, result *manager.JobRe
 	}
 
 	return strings.NewReader(form.Encode()), "application/x-www-form-urlencoded", nil
+}
+
+func (s *Service) logAssertions(asserts ...*manager.Assertion) []*manager.Assertion {
+	for _, assert := range asserts {
+		if !assert.Pass {
+			logging.Logger.Error("assertion failed", "assert", assert.Message)
+		}
+	}
+	return asserts
 }

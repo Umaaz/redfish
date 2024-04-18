@@ -51,7 +51,7 @@ class StringMatcher extends Matcher {
   expected: String
 }
 
-typealias Source = String | DataSource
+typealias Source = String | DataSource | Int | Boolean | Float
 
 class DataSource {
   sourceId: String
@@ -68,9 +68,11 @@ class FormBody extends RequestBody {
   params: Mapping<Source, Source>
 }
 
+typealias JsonObject = Source | Mapping<Source, Any> | Listing<Any>
+
 class JsonBody extends RequestBody {
   type = "json"
-  params: Mapping<Source, Source>
+  params: Mapping<Source, JsonObject>
 }
 
 abstract class Extractor {
