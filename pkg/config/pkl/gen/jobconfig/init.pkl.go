@@ -11,6 +11,7 @@ func init() {
 	pkl.RegisterMapping("pickle.config.job#Expectation", Expectation{})
 	pkl.RegisterMapping("pickle.config.job#JsonMatcher", JsonMatcherImpl{})
 	pkl.RegisterMapping("pickle.config.job#StringMatcher", StringMatcherImpl{})
+	pkl.RegisterMapping("pickle.config.job#FormattingDataSource", FormattingDataSource{})
 	pkl.RegisterMapping("pickle.config.job#FormBody", FormBodyImpl{})
 	pkl.RegisterMapping("pickle.config.job#JsonBody", JsonBodyImpl{})
 	pkl.RegisterMapping("pickle.config.job#JsonExtractor", JsonExtractorImpl{})

@@ -21,6 +21,8 @@ type App interface {
 	GetRules() []*jobconfig.RuleConfig
 
 	GetProducer() *producer.Producer
+
+	GetDefaults() *Defaults
 }
 
 var _ App = (*AppImpl)(nil)
@@ -35,6 +37,8 @@ type AppImpl struct {
 	Rules []*jobconfig.RuleConfig `pkl:"rules" json:"rules,omitempty" toml:"rules,omitempty" yaml:"rules,omitempty"`
 
 	Producer *producer.Producer `pkl:"producer" json:"producer,omitempty" toml:"producer,omitempty" yaml:"producer,omitempty"`
+
+	Defaults *Defaults `pkl:"defaults" json:"defaults,omitempty" toml:"defaults,omitempty" yaml:"defaults,omitempty"`
 }
 
 func (rcv *AppImpl) GetFile() *string {
@@ -55,6 +59,10 @@ func (rcv *AppImpl) GetRules() []*jobconfig.RuleConfig {
 
 func (rcv *AppImpl) GetProducer() *producer.Producer {
 	return rcv.Producer
+}
+
+func (rcv *AppImpl) GetDefaults() *Defaults {
+	return rcv.Defaults
 }
 
 // LoadFromPath loads the pkl module at the given path and evaluates it into a App

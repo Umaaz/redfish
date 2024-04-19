@@ -61,13 +61,14 @@ func (s *Service) RunJob(config *jobconfig.JobConfig, name string, i int) (*mana
 			u := uuid.New().String()
 			test.Id = &u
 		}
+
+		reqUrl, err := s.readValue(result, test.Url)
+		modifiedUrl := fmt.Sprintf("%s", reqUrl)
 		if test.Name == nil {
-			name := fmt.Sprintf("%s:%s", test.Method, test.Url)
+			name := fmt.Sprintf("%s:%s", test.Method, modifiedUrl)
 			test.Name = &name
 		}
 		logging.Logger.Info("Running test", "app", s.app.GetName(), "job", config.Name, "test", *test.Name, "id", *test.Id)
-
-		reqUrl, err := s.readValue(result, test.Url)
 		if err != nil {
 			err = s.handleError(result, test, err)
 			if err != nil {
@@ -87,7 +88,7 @@ func (s *Service) RunJob(config *jobconfig.JobConfig, name string, i int) (*mana
 			return result, nil
 		}
 
-		request, err := http.NewRequest(strings.ToUpper(test.Method), reqUrl, body)
+		request, err := http.NewRequest(strings.ToUpper(test.Method), modifiedUrl, body)
 		if err != nil {
 			err = s.handleError(result, test, err)
 			if err != nil {
@@ -99,6 +100,12 @@ func (s *Service) RunJob(config *jobconfig.JobConfig, name string, i int) (*mana
 
 		if content != "" {
 			request.Header.Add("content-type", content)
+		}
+
+		if s.app.GetDefaults() != nil && s.app.GetDefaults().Headers != nil {
+			for k, v := range s.app.GetDefaults().Headers {
+				request.Header.Add(k, v)
+			}
 		}
 
 		if test.Headers != nil {
@@ -171,8 +178,17 @@ func (s *Service) handleError(result *manager.JobResult, test *jobconfig.Test, e
 	return nil
 }
 
-func (s *Service) readValue(result *manager.JobResult, input any) (string, error) {
+func (s *Service) readValue(result *manager.JobResult, input any) (any, error) {
 	if v, ok := input.(string); ok {
+		return v, nil
+	}
+	if v, ok := input.(int); ok {
+		return v, nil
+	}
+	if v, ok := input.(bool); ok {
+		return v, nil
+	}
+	if v, ok := input.(float64); ok {
 		return v, nil
 	}
 
@@ -197,6 +213,30 @@ func (s *Service) readValue(result *manager.JobResult, input any) (string, error
 		switch v.Source {
 		case "response":
 			return s.readResponseValue(v, source)
+		}
+	}
+
+	if v, ok := input.(*jobconfig.FormattingDataSource); ok {
+		id := v.SourceId
+		var source *manager.TestResult
+		if id == "" {
+			source = result.Results[len(result.Results)-1]
+		} else {
+			for _, testResult := range result.Results {
+				if *testResult.Test.Id == id {
+					source = testResult
+					break
+				}
+			}
+		}
+
+		if source == nil {
+			return "", errors.New("cannot find datasource source: " + v.SourceId + ":" + v.Source)
+		}
+
+		switch v.Source {
+		case "response":
+			return s.readResponseValueF(v, source)
 		}
 	}
 
@@ -394,7 +434,7 @@ func (s *Service) processObject(params map[any]any, result *manager.JobResult) (
 		if err != nil {
 			return nil, errors.Join(errors.New("cannot process value for object"), err)
 		}
-		nMap[key] = value
+		nMap[fmt.Sprintf("%s", key)] = value
 	}
 	return nMap, nil
 }
@@ -473,6 +513,7 @@ func (s *Service) extractFromJsonObject(extractor jobconfig.JsonExtractor, data 
 				for i, item := range v {
 					haystack[strconv.Itoa(i)] = item
 				}
+				continue
 			}
 		}
 		return "", errors.New(fmt.Sprintf("path %s not found in object", part))
@@ -506,4 +547,34 @@ func (s *Service) logAssertions(asserts ...*manager.Assertion) []*manager.Assert
 		}
 	}
 	return asserts
+}
+
+func (s *Service) readResponseValueF(v *jobconfig.FormattingDataSource, source *manager.TestResult) (string, error) {
+	body := source.Response
+	if body == nil {
+		return "", errors.New("no response from source: " + *source.Test.Id)
+	}
+
+	var results []any
+	extractors := v.Extractors
+
+	for _, extractor := range extractors {
+		switch extractor.GetType() {
+		case "json":
+			var data map[string]any
+			err := json.Unmarshal(body, &data)
+			if err != nil {
+				return "", errors.New("invalid json response from source: " + *source.Test.Id)
+			}
+			result, err := s.extractFromJsonObject(extractor.(jobconfig.JsonExtractor), data)
+			if err != nil {
+				return "", errors.Join(errors.New("cannot process json response from source"), err)
+			}
+			results = append(results, result)
+		default:
+			return "", errors.New(fmt.Sprintf("unsupported extractor type %s", extractor.GetType()))
+		}
+	}
+	sprintf := fmt.Sprintf(v.StringFmt, results...)
+	return sprintf, nil
 }

@@ -6,6 +6,10 @@ import "Producer.pkl"
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.5.3#/go.pkl"
 
+class Defaults {
+  headers: Mapping<String, String>
+}
+
 file: String?
 
 name: String
@@ -15,3 +19,5 @@ jobs: Listing<JobConfig>
 rules: Listing<RuleConfig>
 
 producer: Producer?
+
+defaults: Defaults?

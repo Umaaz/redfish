@@ -78,6 +78,28 @@ jobs = new {
           }
         }
       }
+
+      new {
+        name = "repost extracted response json"
+        url = "https://postman-echo.com/post"
+        method = "post"
+        body = new JsonBody {
+          params {
+            ["key1"] = new Mapping {
+              ["key2"] = new DataSource { sourceId = "initial" extractor = new JsonExtractor { path = "headers.x-redfish-test" } }
+            }
+          }
+        }
+        expected {
+          body = new JsonMatcher {
+            expected {
+              ["form.key1"] = null
+              ["json.key1.key2"] = "atestvalue"
+              ["headers.content-type"] = "application/json"
+            }
+          }
+        }
+      }
     }
   }
 }
@@ -92,7 +114,6 @@ rules = new {
 producer  {
   prometheus  {
     url = "https://mimir.services.streamhippo.io"
-    path = "/api/v1/push"
     headers {
       ["Authorization"] = "basic " + read("env:MIMIR_AUTH")
       ["X-Scope-OrgId"] = "services"

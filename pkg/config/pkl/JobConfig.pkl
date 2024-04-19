@@ -23,7 +23,7 @@ class JobConfig {
 class Test {
   id: String?
   name: String?
-  url: String | DataSource
+  url: String | DataSource | FormattingDataSource
   method: "get" | "post" | "put" | "delete" | String = "get"
   body: RequestBody?
 
@@ -51,12 +51,19 @@ class StringMatcher extends Matcher {
   expected: String
 }
 
-typealias Source = String | DataSource | Int | Boolean | Float
+typealias Source = String | DataSource | FormattingDataSource | Int | Boolean | Float
 
 class DataSource {
-  sourceId: String
+  sourceId: String = ""
   source: "response"
   extractor: Extractor
+}
+
+class FormattingDataSource {
+  sourceId: String = ""
+  source: "response"
+  extractors: Listing<Extractor>
+  stringFmt: String
 }
 
 abstract class RequestBody {
