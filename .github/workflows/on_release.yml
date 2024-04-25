@@ -36,6 +36,7 @@ jobs:
           version: latest
           args: release --clean
         env:
+          KO_DEFAULTBASEIMAGE: bendonnelly/pkltest
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
           # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
