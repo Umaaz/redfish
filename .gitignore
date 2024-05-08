@@ -3,3 +3,5 @@ dist
 bin
 vendor
 results.xml
+pkl*
+report.xml
