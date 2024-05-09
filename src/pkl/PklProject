@@ -7,7 +7,7 @@ package {
   }
   version = read?("env:VERSION") ?? "0.0.1-SNAPSHOT"
   baseUri = "package://github.com/umaaz/redfish"
-  packageZipUrl = "https://github.com/umaaz/redfish/releases/download/\(name)@\(version)/\(name)@\(version).zip"
+  packageZipUrl = "https://github.com/umaaz/redfish/releases/download/\(version)/\(name)@\(version).zip"
   sourceCode = "https://github.com/umaaz/redfish"
   license = "Apache-2.0"
   description = """
