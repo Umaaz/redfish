@@ -7,11 +7,11 @@ build-go:
 
 .PHONY: gen-pkl
 gen-pkl:
-	pkl-gen-go pkg/config/pkl/AppCopnfig.pkl --generator-settings pkg/config/pkl/generator-settings.pkl
+	pkl-gen-go src/pkl/AppCopnfig.pkl --generator-settings src/pkl/generator-settings.pkl
 
 .PHONY: docker
 docker:
-	 goreleaser --pl
+	 goreleaser
 
 # More exclusions can be added similar with: -not -path './testbed/*'
 ALL_SRC := $(shell find . -name '*.go' -type f | sort)
