@@ -60,4 +60,4 @@ jobs:
       - name: release
         uses: softprops/action-gh-release@v2
         with:
-          files: src/pkl/.out/*
+          files: src/pkl/.out/**/*
