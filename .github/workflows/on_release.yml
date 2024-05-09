@@ -40,8 +40,6 @@ jobs:
           # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
   releasepkl:
-    env:
-      VERSION: ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -51,6 +49,10 @@ jobs:
         uses: pkl-community/setup-pkl@v0
         with:
           pkl-version: 0.25.3
+
+      - run: |
+          TAG=${{ github.ref_name }}
+          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
 
       - name: Build package
         run: pkl project package -w src/pkl/
