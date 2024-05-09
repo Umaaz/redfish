@@ -82,7 +82,7 @@ kos:
       - latest
       - '{{.Version}}'
     base_import_paths: true
-    base_image: bendonnelly/pkl:0.25.1
+    base_image: bendonnelly/pkl:0.25.3
   - id: redfish
     main: ./cmd/redfish
     env:
@@ -104,7 +104,7 @@ kos:
       - latest
       - '{{.Version}}'
     base_import_paths: true
-    base_image: bendonnelly/pkl:0.25.1
+    base_image: bendonnelly/pkl:0.25.3
 
 checksum:
   name_template: SHA256SUMS
